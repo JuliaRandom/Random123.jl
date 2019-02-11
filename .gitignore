@@ -1,0 +1,10 @@
+*.jl.cov
+*.jl.*.cov
+*.jl.mem
+*.swp
+build/
+actual/
+*.log
+*.so
+*.dll
+/docs/site/
