@@ -2,8 +2,10 @@ import Libdl
 import Random: rand, seed!
 import RandomNumbers: AbstractRNG
 
-const librandom123 = Libdl.find_library(["librandom123"], 
-                                        [joinpath(dirname(@__FILE__), "../deps/")])
+const _dep_dir = joinpath(dirname(@__FILE__), "../deps/")
+include_dependency(joinpath(_dep_dir, "build.log"))
+
+const librandom123 = Libdl.find_library(["librandom123"], [_dep_dir])
 
 "True when AES-NI library has been compiled."
 const R123_USE_AESNI = librandom123 != ""

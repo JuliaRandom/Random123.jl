@@ -1,3 +1,11 @@
+# FIXME: Unstable AES-NI.
+
+const libfile = joinpath(dirname(@__FILE__), "librandom123.so")
+
+isfile(libfile) && rm(libfile)
+@warn "AES-NI will be disabled because it is not stable."
+exit()
+
 function build()
     p = pwd()
     cd(dirname(@__FILE__))
@@ -36,8 +44,14 @@ end
 
 check_compiler() = Sys.iswindows() ? true : success(`gcc --version`)
 
-if have_aesni() && check_compiler()
+disabled() = get(ENV, "R123_DISABLE_AESNI", "") != ""
+
+@info "Building dependencies for Random123...Timestamp: $(time())"
+if disabled()
+    isfile(libfile) && rm(libfile)
+    @warn "AES-NI will be disabled"
+elseif have_aesni() && check_compiler()
     build()
 else
-    @warn("AES-NI will not be compiled.")
+    @warn "AES-NI will not be compiled."
 end

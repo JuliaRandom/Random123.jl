@@ -40,12 +40,12 @@ mutable struct AESNI1x <: R123Generator1x{UInt128}
     x::UInt128
     ctr::UInt128
     key::AESNIKey
-    function AESNI1x(seed::Integer=gen_seed(UInt128))
-        Sys.iswindows() && @warn "`AESNI1x` would be unstable on Windows platform in this version, please use other RNGs."
-        r = new(0, 0, AESNIKey())
-        seed!(r, seed)
-        r
-    end
+end
+
+function AESNI1x(seed::Integer=gen_seed(UInt128))
+    r = AESNI1x(0, 0, AESNIKey())
+    seed!(r, seed)
+    r
 end
 
 function seed!(r::AESNI1x, seed::Integer=gen_seed(UInt128))
@@ -88,19 +88,19 @@ mutable struct AESNI4x <: R123Generator4x{UInt32}
     ctr1::UInt128
     key::AESNIKey
     p::Int
-    function AESNI4x(seed::NTuple{4, Integer}=gen_seed(UInt32, 4))
-        Sys.iswindows() && @warn "`AESNI4x` would be unstable on Windows platform in this version, please use other RNGs."
-        r = new(0, 0, 0, 0, 0, AESNIKey(), 0)
-        seed!(r, seed)
-        r
-    end
+end
+
+function AESNI4x(seed::NTuple{4, Integer}=gen_seed(UInt32, 4))
+    r = AESNI4x(0, 0, 0, 0, 0, AESNIKey(), 0)
+    seed!(r, seed)
+    r
 end
 
 function seed!(r::AESNI4x, seed::NTuple{4, Integer}=gen_seed(UInt32, 4))
     key = union_uint(map(x -> x % UInt32, seed))
     initkey(r, key)
     r.ctr1 = 0
-    p = 0
+    r.p = 0
     random123_r(r)
     r
 end
@@ -114,12 +114,11 @@ function copyto!(dest::AESNI4x, src::AESNI4x)
     dest.p = src.p
     dest
 end
-  
-copy(src::AESNI4x) = copyto!(AESNI4x(), src)
 
-==(r1::AESNI4x, r2::AESNI4x) = unsafe_compare(r1, r2, UInt32, 4) && r1.key == r2.key &&
-    r1.ctr1 == r2.ctr1 && r1.p == r2.p
-  
+copy(src::AESNI4x) = copyto!(AESNI4x(), src)
+==(r1::AESNI4x, r2::AESNI4x) = unsafe_compare(r1, r2, UInt32, 4) &&
+    r1.key == r2.key && r1.ctr1 == r2.ctr1 && r1.p == r2.p
+
 function initkey(r::AESNI1x, key::UInt128)
     k = Ptr{UInt128}(pointer_from_objref(r.key))
     ref = Ref(key)
@@ -185,6 +184,3 @@ function random123_r(r::AESNI4x)
     x = unsafe_wrap(Array, Ptr{UInt32}(pointer_from_objref(r)), 4)
     x[1], x[2], x[3], x[4]
 end
-
-
-# FIXME: Unstable AESNI4x.

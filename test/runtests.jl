@@ -2,7 +2,7 @@ using RandomNumbers
 using Random123
 import Random: seed!
 using Test: @test, @test_throws
-using Base.Printf: @printf
+using Printf: @printf
 
 function compare_dirs(dir1::AbstractString, dir2::AbstractString)
     files1 = readdir(dir1)
