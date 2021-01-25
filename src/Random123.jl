@@ -28,11 +28,14 @@ export Philox2x, Philox4x
 include("philox.jl")
 
 if R123_USE_AESNI
-    export AESNI1x, AESNI4x
-    include("aesni.jl")
+    include("aesni_intrinsics.jl")
+    # export AESNI1x, AESNI4x
+    # include("aesni.jl")
 
     export ARS1x, ARS4x
     include("ars.jl")
+else
+    @warn "AES-NI is not enabled, so AESNI and ARS are not available."
 end
 
 end

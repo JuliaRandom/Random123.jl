@@ -5,10 +5,8 @@ import RandomNumbers: AbstractRNG
 const _dep_dir = joinpath(dirname(@__FILE__), "../deps/")
 include_dependency(joinpath(_dep_dir, "build.log"))
 
-const librandom123 = Libdl.find_library(["librandom123"], [_dep_dir])
-
-"True when AES-NI library has been compiled."
-const R123_USE_AESNI = librandom123 != ""
+"True when AES-NI has been enabled."
+const R123_USE_AESNI = isfile(joinpath(_dep_dir, "aes-ni"))
 
 const R123Array1x{T<:Union{UInt128}}        = NTuple{1, T}
 const R123Array2x{T<:Union{UInt32, UInt64}} = NTuple{2, T}
@@ -23,6 +21,8 @@ abstract type R123Generator1x{T} <: AbstractR123{T} end
 abstract type R123Generator2x{T} <: AbstractR123{T} end
 "RNG that generates four numbers at a time."
 abstract type R123Generator4x{T} <: AbstractR123{T} end
+
+_value(r::AbstractR123{T}, i = 1, ::Type{T2} = T) where {T, T2} = unsafe_load(Ptr{T2}(pointer_from_objref(r)), i)
 
 "Set the counter of a Random123 RNG."
 @inline function set_counter!(r::R123Generator1x{T}, ctr::Integer) where T <: UInt128
@@ -41,7 +41,7 @@ end
 @inline function rand(r::R123Generator1x{T}, ::Type{T}) where T <: UInt128
     r.ctr += 1
     random123_r(r)
-    r.x
+    _value(r)
 end
 
 @inline function rand(r::R123Generator2x{T}, ::Type{T}) where T <: Union{UInt32, UInt64}
@@ -62,7 +62,7 @@ end
         r.p = 0
     end
     r.p += 1
-    unsafe_load(Ptr{T}(pointer_from_objref(r)), r.p)
+    _value(r, r.p)
 end
 
 @inline function rand(r::R123Generator1x{T}, ::Type{R123Array1x{T}}) where T <: UInt128
@@ -95,7 +95,7 @@ for (T, DT) in ((UInt32, UInt64), (UInt64, UInt128))
             random123_r(r)
         end
         r.p = 1
-        unsafe_load(Ptr{$DT}(pointer_from_objref(r)), 1)
+        _value(r, 1, $DT)
     end
 end
 
@@ -105,8 +105,9 @@ end
         random123_r(r)
     end
     r.p = 4
-    unsafe_load(Ptr{UInt128}(pointer_from_objref(r)), 1)
+    _value(r, 1, UInt128)
 end
 
-"Do one iteration and return the a tuple of a Random123 RNG object."
+"Do one iteration and
+return the result tuple of a Random123 RNG object."
 random123_r
