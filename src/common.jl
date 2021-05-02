@@ -31,22 +31,56 @@ abstract type R123Generator4x{T} <: AbstractR123{T} end
     r
 end
 
-@inline function set_counter!(r::AbstractR123{T}, ctr::Integer) where T <: Union{UInt32, UInt64}
+@inline function set_counter!(
+    r::R123Generator2x{T},
+    (ctr1, ctr2)::Tuple{<:Integer, <:Integer}
+) where T <: Union{UInt32, UInt64}
     r.p = 0
-    r.ctr1 = ctr % T
+    r.ctr1 = ctr1 % T
+    r.ctr2 = ctr2 % T
     random123_r(r)
     r
 end
 
+@inline function set_counter!(
+    r::R123Generator4x{T},
+    (ctr1, ctr2, ctr3, ctr4)::Tuple{<:Integer, <:Integer, <:Integer, <:Integer}
+) where T <: Union{UInt32, UInt64}
+    r.p = 0
+    r.ctr1 = ctr1 % T
+    r.ctr2 = ctr2 % T
+    r.ctr3 = ctr3 % T
+    r.ctr4 = ctr4 % T
+    random123_r(r)
+    r
+end
+@inline set_counter!(r::R123Generator2x, ctr::Integer) = set_counter!(r, (ctr, 0))
+@inline set_counter!(r::R123Generator4x, ctr::Integer) = set_counter!(r, (ctr, 0, 0, 0))
+
+@inline inc_counter!(r::R123Generator1x{T}) where T = (r.ctr += one(T); r)
+@inline function inc_counter!(r::R123Generator2x{T}) where T
+    r.ctr1 += one(T)
+    r.ctr1 == zero(T) && (r.ctr2 += one(T))
+    r
+end
+@inline function inc_counter!(r::R123Generator4x{T}) where T
+    r.ctr1 += one(T)
+    r.ctr1 == zero(T) && (r.ctr2 += one(T))
+    r.ctr2 == zero(T) && (r.ctr3 += one(T))
+    r.ctr3 == zero(T) && (r.ctr4 += one(T))
+    r
+end
+
 @inline function rand(r::R123Generator1x{T}, ::Type{T}) where T <: UInt128
-    r.ctr += 1
+    r.ctr += one(T)
     random123_r(r)
     r.x
 end
 
 @inline function rand(r::R123Generator2x{T}, ::Type{T}) where T <: Union{UInt32, UInt64}
+    to = one(T)
     if r.p == 1
-        r.ctr1 += 1
+        inc_counter!(r)
         random123_r(r)
         r.p = 0
         return r.x2
@@ -57,7 +91,7 @@ end
 
 @inline function rand(r::R123Generator4x{T}, ::Type{T}) where T <: Union{UInt32, UInt64}
     if r.p == 4
-        r.ctr1 += 1
+        inc_counter!(r)
         random123_r(r)
         r.p = 0
     end
@@ -66,13 +100,13 @@ end
 end
 
 @inline function rand(r::R123Generator1x{T}, ::Type{R123Array1x{T}}) where T <: UInt128
-    r.ctr += 1
+    inc_counter!(r)
     random123_r(r)
 end
 
 @inline function rand(r::R123Generator2x{T}, ::Type{R123Array2x{T}}) where T <: Union{UInt32, UInt64}
     if r.p > 0
-        r.ctr1 += 1
+        inc_counter!(r)
     end
     ret = random123_r(r) # which returns a Tuple{T, T}
     r.p = 1
@@ -81,7 +115,7 @@ end
 
 @inline function rand(r::R123Generator4x{T}, ::Type{R123Array4x{T}}) where T <: Union{UInt32, UInt64}
     if r.p > 0
-        r.ctr1 += 1
+        inc_counter!(r)
     end
     ret = random123_r(r)
     r.p = 4
@@ -91,7 +125,7 @@ end
 for (T, DT) in ((UInt32, UInt64), (UInt64, UInt128))
     @eval @inline function rand(r::R123Generator2x{$T}, ::Type{$DT})
         if r.p == 1
-            r.ctr1 += 1
+            inc_counter!(r)
             random123_r(r)
         end
         r.p = 1
@@ -101,7 +135,7 @@ end
 
 @inline function rand(r::R123Generator4x{UInt32}, ::Type{UInt128})
     if r.p > 0
-        r.ctr1 += 1
+        inc_counter!(r)
         random123_r(r)
     end
     r.p = 4
