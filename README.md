@@ -2,13 +2,13 @@
 *Julia implementation of [Random123](https://www.deshawresearch.com/resources_random123.html)*
 
 Build Status:
-[![Build Status](https://github.com/sunoru/Random123.jl/workflows/CI%20Build/badge.svg?branch=master)](https://github.com/sunoru/Random123.jl/actions)
+[![Build Status](https://github.com/JuliaRandom/Random123.jl/workflows/CI%20Build/badge.svg?branch=master)](https://github.com/JuliaRandom/Random123.jl/actions)
 
 Code Coverage:
-[![codecov.io](https://codecov.io/github/sunoru/Random123.jl/coverage.svg?branch=master)](https://codecov.io/github/sunoru/Random123.jl?branch=master)
+[![codecov.io](https://codecov.io/github/JuliaRandom/Random123.jl/coverage.svg?branch=master)](https://codecov.io/github/JuliaRandom/Random123.jl?branch=master)
 
-See [RandomNumbers.jl](https://github.com/sunoru/RandomNumbers.jl) for details. The documentation is also
-hosted [there](http://sunoru.github.io/RandomNumbers.jl/stable/man/random123/).
+See [RandomNumbers.jl](https://github.com/JuliaRandom/RandomNumbers.jl) for details. The documentation is also
+hosted [there](http://juliarandom.github.io/RandomNumbers.jl/stable/man/random123/).
 
 # Installation
 

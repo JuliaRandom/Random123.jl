@@ -14,9 +14,9 @@ function build()
             run(`mingw32-make`)
         catch
             if Sys.WORD_SIZE == 32
-                url = "https://github.com/sunoru/RandomNumbers.jl/releases/download/deplib-0.1/librandom123-32.dll"
+                url = "https://github.com/JuliaRandom/RandomNumbers.jl/releases/download/deplib-0.1/librandom123-32.dll"
             else
-                url = "https://github.com/sunoru/RandomNumbers.jl/releases/download/deplib-0.1/librandom123.dll"
+                url = "https://github.com/JuliaRandom/RandomNumbers.jl/releases/download/deplib-0.1/librandom123.dll"
             end
             @info("You don't have MinGW32 installed, so it's now downloading the library binary from github.")
             download(url, "librandom123.dll")
