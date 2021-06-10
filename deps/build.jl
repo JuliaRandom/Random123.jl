@@ -1,57 +1,23 @@
-# FIXME: Unstable AES-NI.
-
-const libfile = joinpath(dirname(@__FILE__), "librandom123.so")
-
-isfile(libfile) && rm(libfile)
-@warn "AES-NI will be disabled because it is not stable."
-exit()
-
-function build()
-    p = pwd()
-    cd(dirname(@__FILE__))
-    if Sys.iswindows()
-        try
-            run(`mingw32-make`)
-        catch
-            if Sys.WORD_SIZE == 32
-                url = "https://github.com/JuliaRandom/RandomNumbers.jl/releases/download/deplib-0.1/librandom123-32.dll"
-            else
-                url = "https://github.com/JuliaRandom/RandomNumbers.jl/releases/download/deplib-0.1/librandom123.dll"
-            end
-            @info("You don't have MinGW32 installed, so it's now downloading the library binary from github.")
-            download(url, "librandom123.dll")
-        end
-    elseif Sys.isbsd() && !Sys.isapple()  # e.g. FreeBSD
-        run(`gmake`)
-    else
-        run(`make`)
-    end
-    cd(p)
-end
-
-function have_aesni()
-    @static if VERSION < v"0.5-" || Sys.WORD_SIZE != 64
-        return false
-    else
-        ecx = Base.llvmcall(
-            """%1 = call { i32, i32, i32, i32 } asm "xchgq  %rbx,\${1:q}\\0A  cpuid\\0A  xchgq  %rbx,\${1:q}",
-            "={ax},=r,={cx},={dx},0,~{dirflag},~{fpsr},~{flags}"(i32 1)
-            %2 = extractvalue { i32, i32, i32, i32 } %1, 2
-            ret i32 %2""", UInt32, Tuple{})
-        return (ecx >> 25) & 1 == 1
-    end
-end
-
-check_compiler() = Sys.iswindows() ? true : success(`gcc --version`)
-
 disabled() = get(ENV, "R123_DISABLE_AESNI", "") != ""
 
-@info "Building dependencies for Random123...Timestamp: $(time())"
+const __m128i = NTuple{2, VecElement{UInt64}}
+has_aesni() = try
+    ccall(
+        "llvm.x86.aesni.aeskeygenassist", llvmcall, __m128i, (__m128i, UInt8),
+        __m128i((0x0123456789123450, 0x9876543210987654)), 0x1
+    ) ≡ __m128i((0x857c266f7c266e85, 0x2346382146382023))
+catch e
+    false
+end
+
+const filename = joinpath(dirname(@__FILE__), "aes-ni")
+isfile(filename) && rm(filename)
+
 if disabled()
-    isfile(libfile) && rm(libfile)
-    @warn "AES-NI will be disabled"
-elseif have_aesni() && check_compiler()
-    build()
+    @info "AES-NI is disabled."
+elseif has_aesni()
+    @info "AES-NI is enabled."
+    touch(filename)
 else
-    @warn "AES-NI will not be compiled."
+    @info "AES-NI is not supported."
 end
