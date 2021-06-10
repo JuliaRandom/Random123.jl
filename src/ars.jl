@@ -25,8 +25,10 @@ mutable struct ARS1x{R} <: AbstractAESNI1x
 end
 
 function ARS1x(seed::Integer=gen_seed(UInt128), R::Integer = 7)
+    R = Int(R)
     @assert 1 ≤ R ≤ 10
-    r = ARS1x{Int(R)}(zero(__m128i), zero(__m128i), zero(__m128i))
+    m0 = zero(__m128i)
+    r = ARS1x{R}(m0, m0, m0)
     seed!(r, seed)
 end
 

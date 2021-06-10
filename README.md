@@ -12,13 +12,13 @@ hosted [there](http://juliarandom.github.io/RandomNumbers.jl/stable/man/random12
 
 # Installation
 
-This package is registered. The stable version of this package requires Julia `0.7+`. You can install it by:
+This package is registered. The stable version of this package requires Julia `1.5`. You can install it by:
 ```julia
-(v1.1) pkg> add Random123
+(v1.5) pkg> add Random123
 ```
 And then you can run the tests:
 ```julia
-(v1.1) pkg> test Random123
+(v1.5) pkg> test Random123
 ```
 
 This package is under [MIT License](./LICENSE.md). The original license of Random123 can be found
