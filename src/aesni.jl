@@ -111,17 +111,17 @@ AESNIKey(key::UInt128) = _aesni_expand!(AESNIKey(), __m128i(key))
 
 """
 ```julia
-AESNI1x <: R123Generator1x{__m128i}
+AESNI1x <: AbstractAESNI1x
 AESNI1x([seed])
 ```
 
-AESNI1x is one kind of AESNI Counter-Based RNGs. It generates one `__m128i` number at a time.
+AESNI1x is one kind of AESNI Counter-Based RNGs. It generates one `UInt128` number at a time.
 
-`seed` is an `Integer` which will be automatically converted to `__m128i`.
+`seed` is an `Integer` which will be automatically converted to `UInt128`.
 
 Only available when [`R123_USE_AESNI`](@ref).
 """
-mutable struct AESNI1x <: R123Generator1x{UInt128}
+mutable struct AESNI1x <: AbstractAESNI1x
     x::__m128i
     ctr::__m128i
     key::AESNIKey
@@ -156,7 +156,7 @@ copy(src::AESNI1x) = copyto!(AESNI1x(), src)
 
 """
 ```julia
-AESNI4x <: R123Generator4x{UInt32}
+AESNI4x <: AbstractAESNI4x
 AESNI4x([seed])
 ```
 
@@ -166,7 +166,7 @@ AESNI4x is one kind of AESNI Counter-Based RNGs. It generates four `UInt32` numb
 
 Only available when [`R123_USE_AESNI`](@ref).
 """
-mutable struct AESNI4x <: R123Generator4x{UInt32}
+mutable struct AESNI4x <: AbstractAESNI4x
     x::__m128i
     ctr1::__m128i
     key::AESNIKey

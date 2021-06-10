@@ -28,7 +28,7 @@ export Philox2x, Philox4x
 include("philox.jl")
 
 if R123_USE_AESNI
-    include("aesni_intrinsics.jl")
+    include("aesni_common.jl")
     export AESNI1x, AESNI4x
     include("aesni.jl")
 

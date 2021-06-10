@@ -33,7 +33,7 @@ end
 
 @inline function set_counter!(
     r::R123Generator2x{T},
-    (ctr1, ctr2)::Tuple{<:Integer, <:Integer}
+    (ctr1, ctr2)::NTuple{2, Integer}
 ) where T <: Union{UInt32, UInt64}
     r.p = 0
     r.ctr1 = ctr1 % T
@@ -44,7 +44,7 @@ end
 
 @inline function set_counter!(
     r::R123Generator4x{T},
-    (ctr1, ctr2, ctr3, ctr4)::Tuple{<:Integer, <:Integer, <:Integer, <:Integer}
+    (ctr1, ctr2, ctr3, ctr4)::NTuple{4, Integer}
 ) where T <: Union{UInt32, UInt64}
     r.p = 0
     r.ctr1 = ctr1 % T

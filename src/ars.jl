@@ -4,7 +4,7 @@ import RandomNumbers: gen_seed, split_uint, union_uint, seed_type, unsafe_copyto
 
 """
 ```julia
-ARS1x{R} <: R123Generator1x{UInt128}
+ARS1x{R} <: AbstractAESNI1x
 ARS1x([seed, R=7])
 ```
 
@@ -18,7 +18,7 @@ excellent performance.
 
 Only available when [`R123_USE_AESNI`](@ref).
 """
-mutable struct ARS1x{R} <: R123Generator1x{UInt128}
+mutable struct ARS1x{R} <: AbstractAESNI1x
     x::__m128i
     ctr::__m128i
     key::__m128i
@@ -48,7 +48,7 @@ copy(src::ARS1x{R}) where R = ARS1x{R}(src.x, src.ctr, src.key)
 
 """
 ```julia
-ARS4x{R} <: R123Generator4x{UInt32}
+ARS4x{R} <: AbstractAESNI4x
 ARS4x([seed, R=7])
 ```
 
@@ -62,7 +62,7 @@ excellent performance.
 
 Only available when [`R123_USE_AESNI`](@ref).
 """
-mutable struct ARS4x{R} <: R123Generator4x{UInt32}
+mutable struct ARS4x{R} <: AbstractAESNI4x
     x::__m128i
     ctr1::__m128i
     key::__m128i
