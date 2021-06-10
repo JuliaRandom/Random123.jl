@@ -24,7 +24,7 @@ mutable struct ARS1x{R} <: R123Generator1x{UInt128}
     key::__m128i
 end
 
-function ARS1x(seed::Integer = gen_seed(UInt128), R::Integer = 7)
+function ARS1x(seed::Integer=gen_seed(UInt128), R::Integer = 7)
     @assert 1 ≤ R ≤ 10
     r = ARS1x{Int(R)}(zero(__m128i), zero(__m128i), zero(__m128i))
     seed!(r, seed)
@@ -79,7 +79,7 @@ function seed!(r::ARS4x, seed::NTuple{4, Integer}=gen_seed(UInt32, 4))
     r.ctr1 = zero(__m128i)
     r.key = union_uint(Tuple(x % UInt32 for x in seed))
     r.p = 0
-    r.x = ars1xm128i(r)
+    random123_r(r)
     r
 end
 

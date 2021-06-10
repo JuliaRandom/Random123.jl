@@ -27,5 +27,21 @@ Base.xor(a::__m128i, b::__m128i) = llvmcall(
 )
 (+)(a::__m128i, b::Int64) = a + __m128i(zero(UInt64), UInt64(b))
 
-_aes_enc(a::__m128i, round_key::__m128i) = ccall("llvm.x86.aesni.aesenc", llvmcall, __m128i, (__m128i, __m128i), a, round_key)
-_aes_enc_last(a::__m128i, round_key::__m128i) = ccall("llvm.x86.aesni.aesenclast", llvmcall, __m128i, (__m128i, __m128i), a, round_key)
+_aes_enc(a::__m128i, round_key::__m128i) = ccall(
+    "llvm.x86.aesni.aesenc",
+    llvmcall,
+    __m128i, (__m128i, __m128i),
+    a, round_key
+)
+_aes_enc_last(a::__m128i, round_key::__m128i) = ccall(
+    "llvm.x86.aesni.aesenclast",
+    llvmcall,
+    __m128i, (__m128i, __m128i),
+    a, round_key
+)
+_aes_key_gen_assist(a::__m128i, ::Val{R}) where R = ccall(
+    "llvm.x86.aesni.aeskeygenassist",
+    llvmcall,
+    __m128i, (__m128i, UInt8),
+    a, R
+)
