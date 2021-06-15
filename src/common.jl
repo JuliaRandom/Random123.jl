@@ -65,9 +65,15 @@ end
 end
 @inline function inc_counter!(r::R123Generator4x{T}) where T
     r.ctr1 += one(T)
-    r.ctr1 == zero(T) && (r.ctr2 += one(T))
-    r.ctr2 == zero(T) && (r.ctr3 += one(T))
-    r.ctr3 == zero(T) && (r.ctr4 += one(T))
+    if r.ctr1 == zero(T)
+        r.ctr2 += one(T)
+        if r.ctr2 == zero(T)
+            r.ctr3 += one(T)
+            if r.ctr3 == zero(T)
+                r.ctr4 += one(T)
+            end
+        end
+    end
     r
 end
 
