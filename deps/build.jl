@@ -1,9 +1,17 @@
 disabled() = get(ENV, "R123_DISABLE_AESNI", "") != ""
 
-using CpuId
-has_aesni() = cpufeature(:AES)
+const deps_dir = dirname(@__FILE__)
 
-const filename = joinpath(dirname(@__FILE__), "aes-ni")
+has_aesni() = try
+    cmd = Base.julia_cmd()
+    push!(cmd.exec, joinpath(deps_dir, "has_aesni.jl"))
+    run(cmd)
+    true
+catch
+    false
+end
+
+const filename = joinpath(deps_dir, "aes-ni")
 isfile(filename) && rm(filename)
 
 if disabled()
