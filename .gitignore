@@ -9,3 +9,4 @@ actual/
 *.dll
 /docs/site/
 /deps/aes-ni
+Manifest.toml
