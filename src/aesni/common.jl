@@ -1,6 +1,9 @@
 using Base: llvmcall
 import Base.(+)
 
+using ..Random123: R123Generator1x, R123Generator4x
+import ..Random123: random123_r, set_counter!
+
 const __m128i = NTuple{2, VecElement{UInt64}}
 Base.convert(::Type{__m128i}, x::UInt128) = unsafe_load(Ptr{__m128i}(pointer_from_objref(Ref(x))))
 Base.convert(::Type{UInt128}, x::__m128i) = unsafe_load(Ptr{UInt128}(pointer_from_objref(Ref(x))))

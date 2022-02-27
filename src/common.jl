@@ -2,12 +2,6 @@ import Libdl
 import Random: rand, seed!
 import RandomNumbers: AbstractRNG
 
-const _dep_dir = joinpath(dirname(@__FILE__), "../deps/")
-include_dependency(joinpath(_dep_dir, "build.log"))
-
-"True when AES-NI has been enabled."
-const R123_USE_AESNI = isfile(joinpath(_dep_dir, "aes-ni"))
-
 const R123Array1x{T<:Union{UInt128}}        = NTuple{1, T}
 const R123Array2x{T<:Union{UInt32, UInt64}} = NTuple{2, T}
 const R123Array4x{T<:Union{UInt32, UInt64}} = NTuple{4, T}
