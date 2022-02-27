@@ -40,8 +40,7 @@ function __init__()
         cmd = Base.julia_cmd()
         script = joinpath(aesni_dir, "has_aesni.jl")
         push!(cmd.exec, script)
-        run(cmd)
-        true
+        success(cmd)
     catch
         false
     end
