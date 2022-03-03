@@ -1,4 +1,4 @@
-if R123_USE_AESNI[]
+if use_aesni()
 
 import Random: seed!
 using Test: @test

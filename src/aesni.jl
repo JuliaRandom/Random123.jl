@@ -63,6 +63,9 @@ _aes_128_assist(a::__m128i, b::__m128i) = llvmcall(
 )
 
 function _aesni_expand!(k::AESNIKey, rkey::__m128i)
+    # Every constructor of AES-NI RNGs will first call `_aesni_expand!`, so check it here.
+    check_use_aesni()
+
     k.key1 = rkey
     tmp = _aes_key_gen_assist(rkey, Val(0x1))
     rkey = _aes_128_assist(rkey, tmp)
