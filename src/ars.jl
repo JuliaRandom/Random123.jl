@@ -27,7 +27,6 @@ end
 function ARS1x(seed::Integer=gen_seed(UInt128), R::Integer = 7)
     R = Int(R)
     @assert 1 ≤ R ≤ 10
-    check_use_aesni()
     m0 = zero(__m128i)
     r = ARS1x{R}(m0, m0, m0)
     seed!(r, seed)
@@ -75,7 +74,6 @@ end
 function ARS4x(seed::NTuple{4, Integer}=gen_seed(UInt32, 4), R::Integer=7)
     R = Int(R)
     @assert 1 ≤ R ≤ 10
-    check_use_aesni()
     r = ARS4x{R}(zero(__m128i), zero(__m128i), zero(__m128i), 0)
     seed!(r, seed)
 end

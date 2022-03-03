@@ -66,31 +66,3 @@ abstract type AbstractAESNI4x <: R123Generator4x{UInt32} end
 end
 
 @inline inc_counter!(r::AbstractAESNI4x) = (r.ctr1 += one(__m128i); r)
-
-const R123_USE_AESNI = Ref{Union{Nothing,Bool}}(nothing)
-
-"True when AES-NI has been enabled."
-function use_aesni()
-    if R123_USE_AESNI[] ≡ nothing
-        R123_USE_AESNI[] = try
-            cmd = Base.julia_cmd()
-            push!(
-                cmd.exec, "-e",
-                "const __m128i = NTuple{2, VecElement{UInt64}};" *
-                "@assert ccall(\"llvm.x86.aesni.aeskeygenassist\", " *
-                "llvmcall, __m128i, (__m128i, UInt8), " *
-                "__m128i((0x0123456789123450, 0x9876543210987654)), 0x1) ≡ " *
-                "__m128i((0x857c266f7c266e85, 0x2346382146382023))"
-            )
-            success(cmd)
-        catch e
-            false
-        end
-    end
-    R123_USE_AESNI[]
-end
-function check_use_aesni()
-    if !use_aesni()
-        error("AES-NI is not enabled, so AESNI and ARS are not available.")
-    end
-end
