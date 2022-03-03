@@ -45,7 +45,7 @@ catch e
     false
 end
 
-if R123_USE_AESNI
+@static if R123_USE_AESNI
     export AESNI1x, AESNI4x
     export ARS1x, ARS4x
     include("./aesni_common.jl")
