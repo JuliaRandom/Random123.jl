@@ -1,8 +1,54 @@
 using RandomNumbers
 using Random123
 import Random: seed!
-using Test: @test, @test_throws
+using Test: @test, @test_throws, @testset
 using Printf: @printf
+
+@testset "functional" begin
+    threefry = Random123.threefry
+    for T in [UInt32, UInt64]
+        key = (T(123), T(456))
+        rng = Threefry2x(T, key)
+        x1 = rand(rng, T)
+        x2 = rand(rng, T)
+        x3 = rand(rng, T)
+        x4 = rand(rng, T)
+        x5 = rand(rng, T)
+        y1,y0 = threefry(key, (T(0), T(0)), Val(20))
+        y3,y2 = threefry(key, (T(1), T(0)), Val(20))
+        y5,y4 = threefry(key, (T(2), T(0)), Val(20))
+        @test x1 === y1
+        @test x2 === y2
+        @test x3 === y3
+        @test x4 === y4
+        @test x5 === y5
+    end
+    for T in [UInt32, UInt64]
+        key = (T(123), T(456), T(7), T(8))
+        rng = Threefry4x(T, key)
+        x1 = rand(rng, T)
+        x2 = rand(rng, T)
+        x3 = rand(rng, T)
+        x4 = rand(rng, T)
+        x5 = rand(rng, T)
+        x6 = rand(rng, T)
+        x7 = rand(rng, T)
+        x8 = rand(rng, T)
+        x9 = rand(rng, T)
+        y1,y2,y3,y4 = threefry(key, (T(0), T(0), T(0), T(0)), Val(20))
+        y5,y6,y7,y8 = threefry(key, (T(1), T(0), T(0), T(0)), Val(20))
+        y9,_,_,_    = threefry(key, (T(2), T(0), T(0), T(0)), Val(20))
+        @test x1 === y1
+        @test x2 === y2
+        @test x3 === y3
+        @test x4 === y4
+        @test x5 === y5
+        @test x6 === y6
+        @test x7 === y7
+        @test x8 === y8
+        @test x9 === y9
+    end
+end
 
 function compare_dirs(dir1::AbstractString, dir2::AbstractString)
     files1 = readdir(dir1)
