@@ -4,10 +4,13 @@ import Random: seed!
 using Test: @test, @test_throws, @testset, @inferred
 using Printf: @printf
 
+@info "Testing Random123"
+
 @testset "functional API" begin
     threefry = Random123.threefry
     philox = Random123.philox
     aesni = Random123.aesni
+    ars = Random123.ars
     get_key = Random123.get_key
     get_ctr = Random123.get_ctr
     seed1 = 1
@@ -24,6 +27,8 @@ using Printf: @printf
         (Philox4x(UInt64  , seed2) , philox  , (Val(10),)) ,
         (AESNI1x(seed1)            , aesni   , ()        ) ,
         (AESNI4x(seed4)            , aesni   , ()        ) ,
+        (ARS1x(seed1)              , ars     , (Val(7),) ) ,
+        (ARS4x(seed4)              , ars     , (Val(7),) ) ,
     ]
         key = @inferred get_key(rng)
         ctr = @inferred get_ctr(rng)
@@ -37,7 +42,8 @@ using Printf: @printf
         @test val1 isa Tuple
         @test isbitstype(typeof(val1))
     end
-
+end
+@testset "functional consistency" begin
     for T in [UInt32, UInt64]
         for (rng, alg, option) in [
                 (Threefry2x(T, (T(123), T(456))), threefry, Val(20)),
@@ -100,7 +106,6 @@ end
 
 strip_cr(line::String) = replace(line, r"\r\n$" => "\n")
 
-@info "Testing Random123"
 stdout_ = stdout
 pwd_ = pwd()
 cd(dirname(@__FILE__))
