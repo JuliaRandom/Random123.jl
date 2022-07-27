@@ -1,27 +1,60 @@
 using RandomNumbers
 using Random123
 import Random: seed!
-using Test: @test, @test_throws, @testset
+using Test: @test, @test_throws, @testset, @inferred
 using Printf: @printf
 
-@testset "functional" begin
+@testset "functional API" begin
     threefry = Random123.threefry
+    philox = Random123.philox
+    aesni = Random123.aesni
+    get_key = Random123.get_key
+    get_ctr = Random123.get_ctr
+    seed1 = 1
+    seed2 = (1,2)
+    seed4 = (1,2,3,4)
+    for (rng, alg, options) in [
+        (Threefry2x(UInt32, seed2) , threefry, (Val(20),)) ,
+        (Threefry2x(UInt64, seed2) , threefry, (Val(20),)) ,
+        (Threefry4x(UInt32, seed4) , threefry, (Val(20),)) ,
+        (Threefry4x(UInt64, seed4) , threefry, (Val(20),)) ,
+        (Philox2x(UInt32  , seed1) , philox  , (Val(10),)) ,
+        (Philox2x(UInt64  , seed1) , philox  , (Val(10),)) ,
+        (Philox4x(UInt32  , seed2) , philox  , (Val(10),)) ,
+        (Philox4x(UInt64  , seed2) , philox  , (Val(10),)) ,
+        (AESNI1x(seed1)            , aesni   , ()        ) ,
+        (AESNI4x(seed4)            , aesni   , ()        ) ,
+    ]
+        key = @inferred get_key(rng)
+        ctr = @inferred get_ctr(rng)
+        @test isbitstype(typeof(key))
+        @test isbitstype(typeof(ctr))
+        @test key isa Tuple
+        @test ctr isa Tuple
+        val1 = @inferred alg(key, ctr, options...)
+        val2 = @inferred alg(key, ctr, options...)
+        @test val1 === val2
+        @test val1 isa Tuple
+        @test isbitstype(typeof(val1))
+    end
+
     for T in [UInt32, UInt64]
-        key = (T(123), T(456))
-        rng = Threefry2x(T, key)
-        x1 = rand(rng, T)
-        x2 = rand(rng, T)
-        x3 = rand(rng, T)
-        x4 = rand(rng, T)
-        x5 = rand(rng, T)
-        y1,y0 = threefry(key, (T(0), T(0)), Val(20))
-        y3,y2 = threefry(key, (T(1), T(0)), Val(20))
-        y5,y4 = threefry(key, (T(2), T(0)), Val(20))
-        @test x1 === y1
-        @test x2 === y2
-        @test x3 === y3
-        @test x4 === y4
-        @test x5 === y5
+        for (rng, alg, option) in [
+                (Threefry2x(T, (T(123), T(456))), threefry, Val(20)),
+                (Philox2x(T, 456), philox, Val(10)),
+           ]
+
+            key = @inferred get_key(rng)
+            x1 = rand(rng, T)
+            y1,y0 = alg(key, get_ctr(rng), option)
+            @test x1 === y1
+            x2 = rand(rng, T)
+            x3 = rand(rng, T)
+            ctr = get_ctr(rng)
+            y3,y2 = alg(key, get_ctr(rng), option)
+            @test x2 === y2
+            @test x3 === y3
+        end
     end
     for T in [UInt32, UInt64]
         key = (T(123), T(456), T(7), T(8))
@@ -49,6 +82,7 @@ using Printf: @printf
         @test x9 === y9
     end
 end
+
 
 function compare_dirs(dir1::AbstractString, dir2::AbstractString)
     files1 = readdir(dir1)

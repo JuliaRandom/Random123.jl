@@ -116,10 +116,10 @@ copy(src::Threefry2x{T, R}) where {T, R} = Threefry2x{T, R}(src.x1, src.x2, src.
 
 ==(r1::Threefry2x{T, R}, r2::Threefry2x{T, R}) where {T, R} = unsafe_compare(r1, r2, T, 6) && r1.p == r2.p
 
+@inline get_key(r::Threefry2x) = (r.key1, r.key2)
+@inline get_ctr(r::Threefry2x) = (r.ctr1, r.ctr2)
 @inline function random123_r(r::Threefry2x{T, R}) where {T <: Union{UInt32, UInt64}, R}
-    key = (r.key1, r.key2)
-    ctr = (r.ctr1, r.ctr2)
-    r.x1, r.x2 = threefry(key, ctr, Val(R))
+    r.x1, r.x2 = threefry(get_key(r), get_ctr(r), Val(R))
 end
 
 """
@@ -269,10 +269,11 @@ copy(src::Threefry4x{T, R}) where {T, R} = Threefry4x{T, R}(src.x1, src.x2, src.
 
 ==(r1::Threefry4x{T, R}, r2::Threefry4x{T, R}) where {T, R} = unsafe_compare(r1, r2, T, 12) && r1.p == r2.p
 
+@inline get_key(r::Threefry4x) = (r.key1, r.key2, r.key3, r.key4)
+@inline get_ctr(r::Threefry4x) = (r.ctr1, r.ctr2, r.ctr3, r.ctr4)
+
 @inline function random123_r(r::Threefry4x{T, R}) where {T <: Union{UInt32, UInt64}, R}
-    key = (r.key1, r.key2, r.key3, r.key4)
-    ctr = (r.ctr1, r.ctr2, r.ctr3, r.ctr4)
-    r.x1, r.x2, r.x3, r.x4 = threefry(key, ctr, Val(R))
+    r.x1, r.x2, r.x3, r.x4 = threefry(get_key(r), get_ctr(r), Val(R))
 end
 
 @inline function threefry(key::NTuple{4,T},ctr::NTuple{4,T}, rounds::Val{R})::NTuple{4,T} where {T <: Union{UInt32, UInt64}, R}

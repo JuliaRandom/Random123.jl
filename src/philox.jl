@@ -89,10 +89,11 @@ end
     key + PHILOX_W_0(T)
 end
 
+@inline get_key(r::Philox2x) = (r.key,)
+@inline get_ctr(r::Philox2x) = (r.ctr1, r.ctr2)
+
 @inline function random123_r(r::Philox2x{T, R}) where {T <: Union{UInt32, UInt64}, R}
-    key = (r.key,)
-    ctr = (r.ctr1, r.ctr2)
-    r.x1, r.x2 = philox(key, ctr, Val(R))
+    r.x1, r.x2 = philox(get_key(r), get_ctr(r), Val(R))
 end
 
 """
@@ -198,10 +199,10 @@ end
     key1 + PHILOX_W_0(T), key2 + PHILOX_W_1(T)
 end
 
+@inline get_ctr(r::Philox4x) = (r.ctr1, r.ctr2, r.ctr3, r.ctr4)
+@inline get_key(r::Philox4x) = (r.key1, r.key2)
 @inline function random123_r(r::Philox4x{T, R}) where {T <: Union{UInt32, UInt64}, R}
-    ctr = r.ctr1, r.ctr2, r.ctr3, r.ctr4
-    key = r.key1, r.key2
-    r.x1, r.x2, r.x3, r.x4 = philox(key, ctr, Val(R))
+    r.x1, r.x2, r.x3, r.x4 = philox(get_key(r), get_ctr(r), Val(R))
 end
 
 @inline function philox(key::NTuple{2,T}, ctr::NTuple{4,T}, ::Val{R}) where {T <:Union{UInt32, UInt64}, R}
