@@ -36,14 +36,23 @@ using Printf: @printf
         @test isbitstype(typeof(ctr))
         @test key isa Tuple
         @test ctr isa Tuple
+        @test eltype(key) <: Union{UInt32, UInt64, UInt128}
+        @test eltype(ctr) <: Union{UInt32, UInt64, UInt128}
         val1 = @inferred alg(key, ctr, options...)
         val2 = @inferred alg(key, ctr, options...)
         @test val1 === val2
         @test val1 isa Tuple
         @test isbitstype(typeof(val1))
+        @test eltype(val1) <: Union{UInt32, UInt64, UInt128}
     end
 end
 @testset "functional consistency" begin
+    threefry = Random123.threefry
+    philox = Random123.philox
+    aesni = Random123.aesni
+    ars = Random123.ars
+    get_key = Random123.get_key
+    get_ctr = Random123.get_ctr
     for T in [UInt32, UInt64]
         for (rng, alg, option) in [
                 (Threefry2x(T, (T(123), T(456))), threefry, Val(20)),
@@ -87,6 +96,19 @@ end
         @test x8 === y8
         @test x9 === y9
     end
+
+    rng = ARS1x(1)
+    @test (rand(rng, UInt128),) === ars(get_key(rng), get_ctr(rng), Val(7))
+    @test (rand(rng, UInt128),) === ars(get_key(rng), get_ctr(rng), Val(7))
+    @test (rand(rng, UInt128),) === ars(get_key(rng), get_ctr(rng), Val(7))
+    @test (rand(rng, UInt128),) === ars(get_key(rng), get_ctr(rng), Val(7))
+
+    rng = AESNI1x(1)
+    @test (rand(rng, UInt128),) === aesni(get_key(rng), get_ctr(rng))
+    @test (rand(rng, UInt128),) === aesni(get_key(rng), get_ctr(rng))
+    @test (rand(rng, UInt128),) === aesni(get_key(rng), get_ctr(rng))
+    @test (rand(rng, UInt128),) === aesni(get_key(rng), get_ctr(rng))
+
 end
 
 

@@ -201,16 +201,14 @@ copy(src::AESNI4x) = copyto!(AESNI4x(), src)
 ==(r1::AESNI4x, r2::AESNI4x) = unsafe_compare(r1, r2, UInt128, 2) &&
     r1.key == r2.key && r1.p == r2.p
 
-function get_key(o::Union{AESNI1x, AESNI4x})::NTuple{11, __m128i}
+function get_key__m128i(o::Union{AESNI1x, AESNI4x})::NTuple{11, __m128i}
     k = o.key
     (k.key1,k.key2,k.key3,k.key4,k.key5,k.key6,k.key7,k.key8,k.key9,k.key10,k.key11)
 end
-function get_ctr(o::AESNI4x)::Tuple{__m128i}
-    (o.ctr1,)
-end
-function get_ctr(o::AESNI1x)::Tuple{__m128i}
-    (o.ctr,)
-end
+get_ctr__m128i(o::AESNI4x)::Tuple{__m128i} = (o.ctr1,)
+get_ctr__m128i(o::AESNI1x)::Tuple{__m128i} = (o.ctr,)
+get_key(o::Union{AESNI1x, AESNI4x})::NTuple{11,UInt128} = map(UInt128, get_key__m128i(o))
+get_ctr(o::Union{AESNI1x, AESNI4x})::Tuple{UInt128} = map(UInt128, get_ctr__m128i(o))
 
 @inline function aesni(key::NTuple{11,__m128i}, ctr::Tuple{__m128i})::Tuple{__m128i}
     key1, key2, key3, key4, key5, key6, key7, key8, key9, key10, key11 = key
@@ -229,12 +227,25 @@ end
     (x,)
 end
 
+"""
+    aesni(key::NTuple{11,UInt128}, ctr::Tuple{UInt128})::Tuple{UInt128}
+
+Functional variant of [`AESNI1x`](@ref) and [`AESNI4x`](@ref). 
+This function if free of mutability and side effects.
+"""
+@inline function aesni(key::NTuple{11,UInt128}, ctr::Tuple{UInt128})::Tuple{UInt128}
+    k = map(__m128i, key)
+    c = map(__m128i, ctr)
+    map(UInt128,aesni(k,c))
+end
+
+
 @inline function random123_r(r::AESNI1x)
-    r.x = only(aesni(get_key(r), get_ctr(r)))
+    r.x = only(aesni(get_key__m128i(r), get_ctr__m128i(r)))
     (UInt128(r.x),)
 end
 
 @inline function random123_r(r::AESNI4x)
-    r.x = only(aesni(get_key(r), get_ctr(r)))
+    r.x = only(aesni(get_key__m128i(r), get_ctr__m128i(r)))
     split_uint(UInt128(r.x), UInt32)
 end

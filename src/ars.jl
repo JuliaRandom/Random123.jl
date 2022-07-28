@@ -98,7 +98,7 @@ copy(src::ARS4x{R}) where R = ARS4x{R}(src.x, src.ctr1, src.key, src.p)
 
 ==(r1::ARS4x{R}, r2::ARS4x{R}) where R = unsafe_compare(r1, r2, UInt128, 3) && r1.p ≡ r2.p
 
-function expr_ars1xm128i(expr_key::Expr, expr_ctr::Expr, R)
+function expr_ars1xm128i(expr_key, expr_ctr, R)
     @assert R isa Int && 1 ≤ R ≤ 10
     rounds = [quote
         kk += kweyl
@@ -130,14 +130,25 @@ end
     expr_ars1xm128i(expr_key, expr_ctr, R)
 end
 
-@generated function ars(key, ctr, ::Val{R}) where {R}
-    expr_key = :(only(key))
-    expr_ctr = :(only(ctr))
-    expr_ars1xm128i(expr_key, expr_ctr, R)
+@generated function ars(key::Tuple{__m128i}, ctr::Tuple{__m128i}, ::Val{R})::Tuple{__m128i} where {R}
+    :(($(expr_ars1xm128i(:(only(key)), :(only(ctr)), R)),))
 end
-get_key(r::Union{ARS1x, ARS4x})::Tuple{__m128i} = (r.key,)
-get_ctr(r::ARS1x)::Tuple{__m128i} = (r.ctr,)
-get_ctr(r::ARS4x)::Tuple{__m128i} = (r.ctr1,)
+
+"""
+    ars(key::Tuple{UInt128}, ctr::Tuple{UInt128}, rounds::Val{R})::Tuple{UInt128} where {R}
+
+Functional variant of [`ARS1x`](@ref) and [`ARS4x`](@ref). 
+This function if free of mutability and side effects.
+"""
+function ars(key::Tuple{UInt128}, ctr::Tuple{UInt128}, rounds::Val{R})::Tuple{UInt128} where {R}
+    k = map(__m128i, key)
+    c = map(__m128i, ctr)
+    map(UInt128,ars(k,c,rounds))
+end
+
+get_key(r::Union{ARS1x, ARS4x}) = (UInt128(r.key),)
+get_ctr(r::ARS1x) = (UInt128(r.ctr),)
+get_ctr(r::ARS4x) = (UInt128(r.ctr1),)
 
 @inline function random123_r(r::ARS1x{R}) where R
     r.x = ars1xm128i(r)
