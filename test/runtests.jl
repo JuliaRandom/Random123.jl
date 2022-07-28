@@ -7,10 +7,6 @@ using Printf: @printf
 @info "Testing Random123"
 
 @testset "functional API" begin
-    threefry = Random123.threefry
-    philox = Random123.philox
-    aesni = Random123.aesni
-    ars = Random123.ars
     get_key = Random123.get_key
     get_ctr = Random123.get_ctr
     seed1 = 1
@@ -47,10 +43,6 @@ using Printf: @printf
     end
 end
 @testset "functional consistency" begin
-    threefry = Random123.threefry
-    philox = Random123.philox
-    aesni = Random123.aesni
-    ars = Random123.ars
     get_key = Random123.get_key
     get_ctr = Random123.get_ctr
     for T in [UInt32, UInt64]
