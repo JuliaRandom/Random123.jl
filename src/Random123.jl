@@ -21,10 +21,10 @@ using RandomNumbers
 export set_counter!
 include("common.jl")
 
-export Threefry2x, Threefry4x
+export Threefry2x, Threefry4x, threefry
 include("threefry.jl")
 
-export Philox2x, Philox4x
+export Philox2x, Philox4x, philox
 include("philox.jl")
 
 export R123_USE_AESNI
@@ -46,8 +46,8 @@ catch e
 end
 
 @static if R123_USE_AESNI
-    export AESNI1x, AESNI4x
-    export ARS1x, ARS4x
+    export AESNI1x, AESNI4x, aesni
+    export ARS1x, ARS4x, ars
     include("./aesni_common.jl")
     include("./aesni.jl")
     include("./ars.jl")

@@ -116,13 +116,25 @@ copy(src::Threefry2x{T, R}) where {T, R} = Threefry2x{T, R}(src.x1, src.x2, src.
 
 ==(r1::Threefry2x{T, R}, r2::Threefry2x{T, R}) where {T, R} = unsafe_compare(r1, r2, T, 6) && r1.p == r2.p
 
+@inline get_key(r::Threefry2x) = (r.key1, r.key2)
+@inline get_ctr(r::Threefry2x) = (r.ctr1, r.ctr2)
 @inline function random123_r(r::Threefry2x{T, R}) where {T <: Union{UInt32, UInt64}, R}
+    r.x1, r.x2 = threefry(get_key(r), get_ctr(r), Val(R))
+end
+
+"""
+    threefry(key::NTuple{2,T}, ctr::NTuple{2,T}, ::Val{R})::NTuple{2,T}
+    threefry(key::NTuple{4,T}, ctr::NTuple{4,T}, ::Val{R})::NTuple{4,T}
+
+Functional variant of [`Threefry2x`](@ref) and [`Threefry4x`](@ref). 
+Produces a pseudorandom output of type `T = UInt64` or `T = UInt32` from the inputs.
+This function if free of mutability and side effects.
+"""
+@inline function threefry(key::NTuple{2,T}, ctr::NTuple{2,T}, ::Val{R})::NTuple{2,T} where {T <: Union{UInt32, UInt64}, R}
     ks2 = SKEIN_KS_PARITY(T)
-    ks0 = r.key1
-    x0 = r.ctr1
+    x0,x1 = ctr
+    ks0,ks1 = key
     ks2 ⊻= ks0
-    ks1 = r.key2
-    x1 = r.ctr2
     ks2 ⊻= ks1
     x0 += ks0
     x1 += ks1
@@ -191,7 +203,7 @@ copy(src::Threefry2x{T, R}) where {T, R} = Threefry2x{T, R}(src.x1, src.x2, src.
         x0 += ks2; x1 += ks0;
         x1 += 8 % T;
     end
-    r.x1, r.x2 = x0, x1
+    x0, x1
 end
 
 """
@@ -257,19 +269,20 @@ copy(src::Threefry4x{T, R}) where {T, R} = Threefry4x{T, R}(src.x1, src.x2, src.
 
 ==(r1::Threefry4x{T, R}, r2::Threefry4x{T, R}) where {T, R} = unsafe_compare(r1, r2, T, 12) && r1.p == r2.p
 
+@inline get_key(r::Threefry4x) = (r.key1, r.key2, r.key3, r.key4)
+@inline get_ctr(r::Threefry4x) = (r.ctr1, r.ctr2, r.ctr3, r.ctr4)
+
 @inline function random123_r(r::Threefry4x{T, R}) where {T <: Union{UInt32, UInt64}, R}
+    r.x1, r.x2, r.x3, r.x4 = threefry(get_key(r), get_ctr(r), Val(R))
+end
+
+@inline function threefry(key::NTuple{4,T},ctr::NTuple{4,T}, rounds::Val{R})::NTuple{4,T} where {T <: Union{UInt32, UInt64}, R}
     ks4 = SKEIN_KS_PARITY(T)
-    ks0 = r.key1
-    x0 = r.ctr1
+    ks0,ks1,ks2,ks3 = key
+    x0,x1,x2,x3 = ctr
     ks4 ⊻= ks0
-    ks1 = r.key2
-    x1 = r.ctr2
     ks4 ⊻= ks1
-    ks2 = r.key3
-    x2 = r.ctr3
     ks4 ⊻= ks2
-    ks3 = r.key4
-    x3 = r.ctr4
     ks4 ⊻= ks3
     x0 += ks0; x1 += ks1; x2 += ks2; x3 += ks3;
 
@@ -633,5 +646,5 @@ copy(src::Threefry4x{T, R}) where {T, R} = Threefry4x{T, R}(src.x1, src.x2, src.
         x0 += ks3; x1 += ks4; x2 += ks0; x3 += ks1;
         x3 += 18 % T;
     end
-    r.x1, r.x2, r.x3, r.x4 = x0, x1, x2, x3
+    x0, x1, x2, x3
 end

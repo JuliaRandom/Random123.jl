@@ -89,8 +89,24 @@ end
     key + PHILOX_W_0(T)
 end
 
+@inline get_key(r::Philox2x) = (r.key,)
+@inline get_ctr(r::Philox2x) = (r.ctr1, r.ctr2)
+
 @inline function random123_r(r::Philox2x{T, R}) where {T <: Union{UInt32, UInt64}, R}
-    ctr1, ctr2, key = r.ctr1, r.ctr2, r.key
+    r.x1, r.x2 = philox(get_key(r), get_ctr(r), Val(R))
+end
+
+"""
+    philox(key::NTuple{1,T}, ctr::NTuple{2,T}, ::Val{R})::NTuple{2,T}
+    philox(key::NTuple{2,T}, ctr::NTuple{4,T}, ::Val{R})::NTuple{4,T}
+
+Functional variant of [`Philox2x`](@ref) and [`Philox4x`](@ref). 
+Produces a pseudorandom output of type `T = UInt64` or `T = UInt32` from the inputs.
+This function if free of mutability and side effects.
+"""
+@inline function philox(key_::Tuple{T}, ctr::NTuple{2,T}, ::Val{R}) where {T,R}
+    key = first(key_)
+    ctr1, ctr2 = ctr
     if R > 0                               ctr1, ctr2 = philox2x_round(ctr1, ctr2, key); end
     if R > 1  key = philox2x_bumpkey(key); ctr1, ctr2 = philox2x_round(ctr1, ctr2, key); end
     if R > 2  key = philox2x_bumpkey(key); ctr1, ctr2 = philox2x_round(ctr1, ctr2, key); end
@@ -107,7 +123,7 @@ end
     if R > 13 key = philox2x_bumpkey(key); ctr1, ctr2 = philox2x_round(ctr1, ctr2, key); end
     if R > 14 key = philox2x_bumpkey(key); ctr1, ctr2 = philox2x_round(ctr1, ctr2, key); end
     if R > 15 key = philox2x_bumpkey(key); ctr1, ctr2 = philox2x_round(ctr1, ctr2, key); end
-    r.x1, r.x2 = ctr1, ctr2
+    ctr1, ctr2
 end
 
 """
@@ -183,9 +199,15 @@ end
     key1 + PHILOX_W_0(T), key2 + PHILOX_W_1(T)
 end
 
+@inline get_ctr(r::Philox4x) = (r.ctr1, r.ctr2, r.ctr3, r.ctr4)
+@inline get_key(r::Philox4x) = (r.key1, r.key2)
 @inline function random123_r(r::Philox4x{T, R}) where {T <: Union{UInt32, UInt64}, R}
-    ctr1, ctr2, ctr3, ctr4 = r.ctr1, r.ctr2, r.ctr3, r.ctr4
-    key1, key2 = r.key1, r.key2
+    r.x1, r.x2, r.x3, r.x4 = philox(get_key(r), get_ctr(r), Val(R))
+end
+
+@inline function philox(key::NTuple{2,T}, ctr::NTuple{4,T}, ::Val{R}) where {T <:Union{UInt32, UInt64}, R}
+    ctr1, ctr2, ctr3, ctr4 = ctr
+    key1, key2 = key
     if R > 0
         ctr1, ctr2, ctr3, ctr4 = philox4x_round(ctr1, ctr2, ctr3, ctr4, key1, key2);
     end
@@ -249,5 +271,5 @@ end
         key1, key2 = philox4x_bumpkey(key1, key2);
         ctr1, ctr2, ctr3, ctr4 = philox4x_round(ctr1, ctr2, ctr3, ctr4, key1, key2);
     end
-    r.x1, r.x2, r.x3, r.x4 = ctr1, ctr2, ctr3, ctr4
+    ctr1, ctr2, ctr3, ctr4
 end
