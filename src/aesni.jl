@@ -28,17 +28,17 @@ copy(src::AESNIKey) = copyto!(AESNIKey(), src)
 """
 Assistant function for AES128. Compiled from the C++ source code:
 ```cpp
-R123_STATIC_INLINE __m128i AES_128_ASSIST (__m128i temp1, __m128i temp2) { 
-    __m128i temp3; 
-    temp2 = _mm_shuffle_epi32 (temp2 ,0xff); 
+R123_STATIC_INLINE __m128i AES_128_ASSIST (__m128i temp1, __m128i temp2) {
+    __m128i temp3;
+    temp2 = _mm_shuffle_epi32 (temp2 ,0xff);
     temp3 = _mm_slli_si128 (temp1, 0x4);
     temp1 = _mm_xor_si128 (temp1, temp3);
     temp3 = _mm_slli_si128 (temp3, 0x4);
     temp1 = _mm_xor_si128 (temp1, temp3);
     temp3 = _mm_slli_si128 (temp3, 0x4);
     temp1 = _mm_xor_si128 (temp1, temp3);
-    temp1 = _mm_xor_si128 (temp1, temp2); 
-    return temp1; 
+    temp1 = _mm_xor_si128 (temp1, temp2);
+    return temp1;
 }
 ```
 """
@@ -58,9 +58,9 @@ _aes_128_assist(a::__m128i, b::__m128i) = llvmcall(
     %15 = xor <2 x i64> %12, %5
     %16 = xor <2 x i64> %15, %14
     ret <2 x i64> %16""",
-    __m128i, Tuple{__m128i, __m128i},
-    a, b
-)
+    __m128i_lvec, Tuple{__m128i_lvec, __m128i_lvec},
+    a.data, b.data
+) |> __m128i
 
 function _aesni_expand!(k::AESNIKey, rkey::__m128i)
     k.key1 = rkey
@@ -230,7 +230,7 @@ end
 """
     aesni(key::NTuple{11,UInt128}, ctr::Tuple{UInt128})::Tuple{UInt128}
 
-Functional variant of [`AESNI1x`](@ref) and [`AESNI4x`](@ref). 
+Functional variant of [`AESNI1x`](@ref) and [`AESNI4x`](@ref).
 This function if free of mutability and side effects.
 """
 @inline function aesni(key::NTuple{11,UInt128}, ctr::Tuple{UInt128})::Tuple{UInt128}
