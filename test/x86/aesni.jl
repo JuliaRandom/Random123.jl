@@ -1,5 +1,3 @@
-if R123_USE_AESNI
-
 import Random: seed!
 using Test: @test
 
@@ -26,5 +24,3 @@ r1 = AESNI4x(split_uint(key, UInt32))
 set_counter!(r, 0)
 set_counter!(r1, 1)
 @test rand(r, Tuple{UInt128})[1] ≡ rand(r1, UInt128)
-
-end

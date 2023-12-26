@@ -29,10 +29,8 @@ include("philox.jl")
 
 export R123_USE_AESNI
 
-"True when AES-NI has been enabled."
-const R123_USE_AESNI = @static if Sys.isapple() && Sys.ARCH ≡ :aarch64
-    false
-else
+"True when x86 AES-NI instructiona have been detected."
+const R123_USE_X86_AES_NI::Bool = @static if Sys.ARCH ≡ :x86_64 || Sys.ARCH ≡ :i686
         try
         cmd = Base.julia_cmd()
         push!(
@@ -47,16 +45,24 @@ else
     catch e
         false
     end
+else
+    false
 end
+
+"True when AES-acceleration instructions have been detected."
+const R123_USE_AESNI::Bool = R123_USE_X86_AES_NI
 
 @static if R123_USE_AESNI
     export AESNI1x, AESNI4x, aesni
     export ARS1x, ARS4x, ars
-    include("./aesni_common.jl")
-    include("./aesni.jl")
-    include("./ars.jl")
 else
-    @warn "AES-NI instruction set is not enabled, so the related RNGs (AESNI and ARS) are not available."
+    @warn "AES-acceleration instructions have not been detected, so the related RNGs (AESNI and ARS) are not available."
+end
+
+@static if R123_USE_X86_AES_NI
+    include("./x86/aesni_common.jl")
+    include("./x86/aesni.jl")
+    include("./x86/ars.jl")
 end
 
 end
