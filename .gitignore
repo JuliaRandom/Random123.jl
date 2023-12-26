@@ -10,3 +10,4 @@ actual/
 /docs/site/
 /deps/aes-ni
 Manifest.toml
+.DS_Store
