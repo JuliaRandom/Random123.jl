@@ -29,7 +29,7 @@ include("philox.jl")
 
 export R123_USE_AESNI
 
-"True when x86 AES-NI instructiona have been detected."
+"True when x86 AES-NI instructions have been detected."
 const R123_USE_X86_AES_NI::Bool = @static if Sys.ARCH ≡ :x86_64 || Sys.ARCH ≡ :i686
         try
         cmd = Base.julia_cmd()
@@ -49,7 +49,7 @@ else
     false
 end
 
-"True when AArch64 FEAT_AES intrinsics have been detected."
+"True when AArch64 FEAT_AES instructions have been detected."
 const R123_USE_AARCH64_FEAT_AES::Bool = if Sys.ARCH ≡ :aarch64
         try
         cmd = Base.julia_cmd()
