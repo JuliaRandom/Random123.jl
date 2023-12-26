@@ -211,22 +211,8 @@ get_ctr_uint64x2(o::AESNI1x)::Tuple{uint64x2} = (o.ctr,)
 get_key(o::Union{AESNI1x, AESNI4x})::NTuple{11,UInt128} = map(UInt128, get_key_uint64x2(o))
 get_ctr(o::Union{AESNI1x, AESNI4x})::Tuple{UInt128} = map(UInt128, get_ctr_uint64x2(o))
 
-@inline function aesni(key::NTuple{11,uint64x2}, ctr::Tuple{uint64x2})::Tuple{uint64x2}
-    key1, key2, key3, key4, key5, key6, key7, key8, key9, key10, key11 = key
-    ctr1 = only(ctr)
-    x = key1 ⊻ ctr1
-    x = _aes_enc(x, key2)
-    x = _aes_enc(x, key3)
-    x = _aes_enc(x, key4)
-    x = _aes_enc(x, key5)
-    x = _aes_enc(x, key6)
-    x = _aes_enc(x, key7)
-    x = _aes_enc(x, key8)
-    x = _aes_enc(x, key9)
-    x = _aes_enc(x, key10)
-    x = _aes_enc_last(x, key11)
-    (x,)
-end
+@inline aesni(key::NTuple{11,uint64x2}, ctr::Tuple{uint64x2})::Tuple{uint64x2} =
+    (_aes_enc_full(only(ctr), key),)
 
 """
     aesni(key::NTuple{11,UInt128}, ctr::Tuple{UInt128})::Tuple{UInt128}

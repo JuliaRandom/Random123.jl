@@ -23,7 +23,7 @@ using Printf: @printf
         (Philox4x(UInt32  , seed2) , philox  , (Val(10),)) ,
         (Philox4x(UInt64  , seed2) , philox  , (Val(10),)) ,
     ]
-    if R123_USE_AESNI
+    @static if R123_USE_AESNI
         append!(alg_choices, AlgChoice[
             (AESNI1x(seed1) , aesni , ()        ) ,
             (AESNI4x(seed4) , aesni , ()        ) ,
@@ -172,7 +172,7 @@ redirect_stdout(stdout_)
 compare_dirs("expected", "actual")
 cd(pwd_)
 
-if Random123.R123_USE_X86_AES_NI
+@static if Random123.R123_USE_X86_AES_NI
     include("./x86/aesni.jl")
     include("./x86/ars.jl")
 elseif Random123.R123_USE_AARCH64_FEAT_AES
