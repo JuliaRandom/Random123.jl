@@ -147,6 +147,7 @@ Full AES encryption flow for N rounds.
             return uint64x2(res ⊻ uint8x16(key))
         end
     end
+    return a # pathological 0-round case
 end
 
 "Abstract RNG that generates one number at a time and is based on AESNI."
