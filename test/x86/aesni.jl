@@ -9,7 +9,7 @@ import Random123: __m128i, AESNIKey
 
 @testset "Accelerated AESNI" begin
     x = zero(__m128i)
-    ctr = __m128i(0x9799b5d54f7b9227, 0xb47607190d0dfefb)
+    ctr = __m128i(0x9799b5d54f7b9227b47607190d0dfefb)
     key = 0x07b8e4b6aa98ec245a7da274d3b8146a
     aesni_key = AESNIKey(key)
     @test rand(AESNI1x(x, ctr, aesni_key), UInt128) ≡ 0x60f4c27fe48fe1b8c5f4568a585b0dc0
