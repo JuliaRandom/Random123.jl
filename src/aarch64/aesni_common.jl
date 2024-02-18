@@ -71,6 +71,42 @@ end
     a.data, b.data,
 ) |> uint8x16
 
+const uint32x4_lvec = NTuple{4, VecElement{UInt32}}
+struct uint32x4
+    data::uint32x4_lvec
+end
+@inline Base.convert(::Type{uint64x2}, x::uint32x4) = unsafe_load(Ptr{uint64x2}(pointer_from_objref(Ref(x))))
+@inline Base.convert(::Type{uint32x4}, x::uint64x2) = unsafe_load(Ptr{uint32x4}(pointer_from_objref(Ref(x))))
+@inline uint32x4(x::uint64x2) = convert(uint32x4, x)
+@inline uint64x2(x::uint32x4) = convert(uint64x2, x)
+@inline Base.convert(::Type{uint8x16}, x::uint32x4) = unsafe_load(Ptr{uint8x16}(pointer_from_objref(Ref(x))))
+@inline Base.convert(::Type{uint32x4}, x::uint8x16) = unsafe_load(Ptr{uint32x4}(pointer_from_objref(Ref(x))))
+@inline uint32x4(x::uint8x16) = convert(uint32x4, x)
+@inline uint8x16(x::uint32x4) = convert(uint8x16, x)
+@inline Base.convert(::Type{uint32x4}, x::UInt128) = unsafe_load(Ptr{uint32x4}(pointer_from_objref(Ref(x))))
+@inline Base.convert(::Type{UInt128}, x::uint32x4) = unsafe_load(Ptr{UInt128}(pointer_from_objref(Ref(x))))
+@inline UInt128(x::uint32x4) = convert(UInt128, x)
+@inline uint32x4(x::UInt128) = convert(uint32x4, x)
+@inline Base.convert(::Type{uint32x4}, x::Union{Signed, Unsigned}) = convert(uint32x4, UInt128(x))
+@inline Base.convert(::Type{T}, x::uint32x4) where T <: Union{Signed, Unsigned} = convert(T, UInt128(x))
+
+@inline function uint32x4(bytes::Vararg{UInt32, 4})
+    bytes_prepped = bytes
+    @static if LITTLE_ENDIAN
+        bytes_prepped = reverse(bytes_prepped)
+    end
+    bytes_vec::uint32x4_lvec = VecElement.(bytes_prepped)
+    return uint32x4(bytes_vec)
+end
+
+@inline Base.zero(::Type{uint32x4}) = convert(uint32x4, 0)
+@inline Base.xor(a::uint32x4, b::uint32x4) = llvmcall(
+    """%3 = xor <4 x i32> %1, %0
+    ret <4 x i32> %3""",
+    uint32x4_lvec, Tuple{uint32x4_lvec, uint32x4_lvec},
+    a.data, b.data,
+) |> uint32x4
+
 # Raw NEON instrinsics, provided by FEAT_AES
 @inline _vaese(a::uint8x16, b::uint8x16) = ccall(
     "llvm.aarch64.crypto.aese",
@@ -126,8 +162,9 @@ end
 end
 @inline function _aes_key_gen_assist(a::uint64x2, ::Val{R}) where {R}
     res = _aes_key_gen_shuffle_helper(_vaese(uint8x16(a), zero(uint8x16)))
-    r = R % UInt64
-    return uint64x2(res) ⊻ uint64x2(r, r)
+    r = R % UInt32
+    z = zero(UInt32)
+    return uint64x2(res) ⊻ uint64x2(uint32x4(r, z, r, z))
 end
 
 """
