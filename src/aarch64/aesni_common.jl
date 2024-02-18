@@ -23,7 +23,7 @@ else
     uint64x2((VecElement(hi), VecElement(lo)))
 end
 
-@inline Base.zero(::Type{uint64x2}) = convert(uint64x2, 0)
+@inline Base.zero(::Type{uint64x2}) = convert(uint64x2, zero(UInt128))
 @inline Base.one(::Type{uint64x2}) = uint64x2(zero(UInt64), one(UInt64))
 @inline Base.xor(a::uint64x2, b::uint64x2) = llvmcall(
     """%3 = xor <2 x i64> %1, %0
@@ -63,7 +63,7 @@ end
     return uint8x16(bytes_vec)
 end
 
-@inline Base.zero(::Type{uint8x16}) = convert(uint8x16, 0)
+@inline Base.zero(::Type{uint8x16}) = convert(uint8x16, zero(UInt128))
 @inline Base.xor(a::uint8x16, b::uint8x16) = llvmcall(
     """%3 = xor <16 x i8> %1, %0
     ret <16 x i8> %3""",
@@ -99,7 +99,7 @@ end
     return uint32x4(bytes_vec)
 end
 
-@inline Base.zero(::Type{uint32x4}) = convert(uint32x4, 0)
+@inline Base.zero(::Type{uint32x4}) = convert(uint32x4, zero(UInt128))
 @inline Base.xor(a::uint32x4, b::uint32x4) = llvmcall(
     """%3 = xor <4 x i32> %1, %0
     ret <4 x i32> %3""",
