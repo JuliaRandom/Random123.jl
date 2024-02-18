@@ -29,7 +29,7 @@ copy(src::AESNIKey) = copyto!(AESNIKey(), src)
 Assistant function for AES128. Originally compiled for x86 from the C++ source code:
 ```cpp
 R123_STATIC_INLINE __m128i AES_128_ASSIST (__m128i temp1, __m128i temp2) {
-    uint64x2 temp3;
+    __m128i temp3;
     temp2 = _mm_shuffle_epi32 (temp2 ,0xff);
     temp3 = _mm_slli_si128 (temp1, 0x4);
     temp1 = _mm_xor_si128 (temp1, temp3);
