@@ -56,7 +56,7 @@ end
 
 @inline function uint8x16(bytes::Vararg{UInt8, 16})
     bytes_prepped = bytes
-    if LITTLE_ENDIAN
+    @static if LITTLE_ENDIAN
         bytes_prepped = reverse(bytes_prepped)
     end
     bytes_vec::uint8x16_lvec = VecElement.(bytes_prepped)

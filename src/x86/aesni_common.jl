@@ -16,7 +16,7 @@ Base.convert(::Type{__m128i}, x::Union{Signed, Unsigned}) = convert(__m128i, UIn
 Base.convert(::Type{T}, x::__m128i) where T <: Union{Signed, Unsigned} = convert(T, UInt128(x))
 
 const LITTLE_ENDIAN = ENDIAN_BOM ≡ 0x04030201
-__m128i(hi::UInt64, lo::UInt64) = LITTLE_ENDIAN ? __m128i((VecElement(lo), VecElement(hi))) : __m128i((VecElement(hi), VecElement(lo)))
+__m128i(hi::UInt64, lo::UInt64) = @static LITTLE_ENDIAN ? __m128i((VecElement(lo), VecElement(hi))) : __m128i((VecElement(hi), VecElement(lo)))
 
 Base.zero(::Type{__m128i}) = __m128i(zero(UInt64), zero(UInt64))
 Base.one(::Type{__m128i}) = __m128i(zero(UInt64), one(UInt64))
