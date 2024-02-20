@@ -4,6 +4,14 @@ import Base.(+)
 using ..Random123: R123Generator1x, R123Generator4x
 import ..Random123: random123_r, set_counter!
 
+const LLVM_ARCH_STRING::String = @static if R123_USE_ARM_AARCH64_FEAT_AES
+    "aarch64"
+elseif R123_USE_ARM_AARCH32_FEAT_AES
+    "arm"
+else
+    @error "Impossible situation!  Something has gone seriously wrong."
+end
+
 const LITTLE_ENDIAN::Bool = ENDIAN_BOM ≡ 0x04030201
 
 const uint64x2_lvec = NTuple{2, VecElement{UInt64}}
@@ -108,15 +116,17 @@ end
 ) |> uint32x4
 
 # Raw NEON instrinsics, provided by FEAT_AES
+const ARM_AESE_LLVM_INTRINSIC = "llvm.$LLVM_ARCH_STRING.crypto.aese"
 @inline _vaese(a::uint8x16, b::uint8x16) = ccall(
-    "llvm.aarch64.crypto.aese",
+    ARM_AESE_LLVM_INTRINSIC,
     llvmcall,
     uint8x16_lvec,
     (uint8x16_lvec, uint8x16_lvec),
     a.data, b.data,
 ) |> uint8x16
+const ARM_AESMC_LLVM_INTRINSIC = "llvm.$LLVM_ARCH_STRING.crypto.aesmc"
 @inline _vaesmc(a::uint8x16) = ccall(
-    "llvm.aarch64.crypto.aesmc",
+    ARM_AESMC_LLVM_INTRINSIC,
     llvmcall,
     uint8x16_lvec,
     (uint8x16_lvec,),

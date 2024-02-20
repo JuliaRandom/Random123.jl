@@ -175,7 +175,7 @@ cd(pwd_)
 @static if Random123.R123_USE_X86_AES_NI
     include("./x86/aesni.jl")
     include("./x86/ars.jl")
-elseif Random123.R123_USE_AARCH64_FEAT_AES
-    include("./aarch64/aesni.jl")
-    include("./aarch64/ars.jl")
+elseif Random123.R123_USE_ARM_FEAT_AES
+    include("./arm/aesni.jl")
+    include("./arm/ars.jl")
 end
