@@ -12,7 +12,8 @@ using Printf: @printf
     seed1 = 1
     seed2 = (1,2)
     seed4 = (1,2,3,4)
-    for (rng, alg, options) in [
+    AlgChoice = Tuple{Random123.AbstractR123, Function, Union{Tuple{}, Tuple{Val}}}
+    alg_choices = AlgChoice[
         (Threefry2x(UInt32, seed2) , threefry, (Val(20),)) ,
         (Threefry2x(UInt64, seed2) , threefry, (Val(20),)) ,
         (Threefry4x(UInt32, seed4) , threefry, (Val(20),)) ,
@@ -21,11 +22,16 @@ using Printf: @printf
         (Philox2x(UInt64  , seed1) , philox  , (Val(10),)) ,
         (Philox4x(UInt32  , seed2) , philox  , (Val(10),)) ,
         (Philox4x(UInt64  , seed2) , philox  , (Val(10),)) ,
-        (AESNI1x(seed1)            , aesni   , ()        ) ,
-        (AESNI4x(seed4)            , aesni   , ()        ) ,
-        (ARS1x(seed1)              , ars     , (Val(7),) ) ,
-        (ARS4x(seed4)              , ars     , (Val(7),) ) ,
     ]
+    @static if R123_USE_AESNI
+        append!(alg_choices, AlgChoice[
+            (AESNI1x(seed1) , aesni , ()        ) ,
+            (AESNI4x(seed4) , aesni , ()        ) ,
+            (ARS1x(seed1)   , ars   , (Val(7),) ) ,
+            (ARS4x(seed4)   , ars   , (Val(7),) ) ,
+        ])
+    end
+    for (rng, alg, options) in alg_choices
         key = @inferred get_key(rng)
         ctr = @inferred get_ctr(rng)
         @test isbitstype(typeof(key))
@@ -89,17 +95,19 @@ end
         @test x9 === y9
     end
 
-    rng = ARS1x(1)
-    @test (rand(rng, UInt128),) === ars(get_key(rng), get_ctr(rng), Val(7))
-    @test (rand(rng, UInt128),) === ars(get_key(rng), get_ctr(rng), Val(7))
-    @test (rand(rng, UInt128),) === ars(get_key(rng), get_ctr(rng), Val(7))
-    @test (rand(rng, UInt128),) === ars(get_key(rng), get_ctr(rng), Val(7))
+    if R123_USE_AESNI
+        rng = ARS1x(1)
+        @test (rand(rng, UInt128),) === ars(get_key(rng), get_ctr(rng), Val(7))
+        @test (rand(rng, UInt128),) === ars(get_key(rng), get_ctr(rng), Val(7))
+        @test (rand(rng, UInt128),) === ars(get_key(rng), get_ctr(rng), Val(7))
+        @test (rand(rng, UInt128),) === ars(get_key(rng), get_ctr(rng), Val(7))
 
-    rng = AESNI1x(1)
-    @test (rand(rng, UInt128),) === aesni(get_key(rng), get_ctr(rng))
-    @test (rand(rng, UInt128),) === aesni(get_key(rng), get_ctr(rng))
-    @test (rand(rng, UInt128),) === aesni(get_key(rng), get_ctr(rng))
-    @test (rand(rng, UInt128),) === aesni(get_key(rng), get_ctr(rng))
+        rng = AESNI1x(1)
+        @test (rand(rng, UInt128),) === aesni(get_key(rng), get_ctr(rng))
+        @test (rand(rng, UInt128),) === aesni(get_key(rng), get_ctr(rng))
+        @test (rand(rng, UInt128),) === aesni(get_key(rng), get_ctr(rng))
+        @test (rand(rng, UInt128),) === aesni(get_key(rng), get_ctr(rng))
+    end
 
 end
 
@@ -164,5 +172,10 @@ redirect_stdout(stdout_)
 compare_dirs("expected", "actual")
 cd(pwd_)
 
-include("aesni.jl")
-include("ars.jl")
+@static if Random123.R123_USE_X86_AES_NI
+    include("./x86/aesni.jl")
+    include("./x86/ars.jl")
+elseif Random123.R123_USE_AARCH64_FEAT_AES
+    include("./aarch64/aesni.jl")
+    include("./aarch64/ars.jl")
+end

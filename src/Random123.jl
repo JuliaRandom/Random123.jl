@@ -29,10 +29,8 @@ include("philox.jl")
 
 export R123_USE_AESNI
 
-"True when AES-NI has been enabled."
-const R123_USE_AESNI = @static if Sys.isapple() && Sys.ARCH ≡ :aarch64
-    false
-else
+"True when x86 AES-NI instructions have been detected."
+const R123_USE_X86_AES_NI::Bool = @static if Sys.ARCH ≡ :x86_64 || Sys.ARCH ≡ :i686
         try
         cmd = Base.julia_cmd()
         push!(
@@ -47,16 +45,51 @@ else
     catch e
         false
     end
+else
+    false
 end
+
+"True when AArch64 FEAT_AES instructions have been detected."
+const R123_USE_AARCH64_FEAT_AES::Bool = if Sys.ARCH ≡ :aarch64
+        try
+        cmd = Base.julia_cmd()
+        push!(
+            cmd.exec,
+            "-e",
+            "const uint8x16 = NTuple{16, VecElement{UInt8}};" *
+            "@assert ccall(\"llvm.aarch64.crypto.aesmc\", " *
+            "llvmcall, uint8x16, (uint8x16,), " *
+            "uint8x16((0x4a, 0x68, 0xbd, 0xe1, 0xfe, 0x16, 0x3d, " *
+            "0xec, 0xde, 0x06, 0x72, 0x86, 0xe3, 0x8c, 0x14, 0xd9))) ≡ " *
+            "uint8x16((0x70, 0xa7, 0x7b, 0xd2, 0x0c, 0x79, 0xbd, " *
+            "0xf1, 0x59, 0xc2, 0xad, 0x1a, 0x9f, 0x05, 0x37, 0x0f))",
+        )
+        success(cmd)
+    catch e
+        false
+    end
+else
+    false
+end
+
+"True when AES-acceleration instructions have been detected."
+const R123_USE_AESNI::Bool = R123_USE_X86_AES_NI || R123_USE_AARCH64_FEAT_AES
 
 @static if R123_USE_AESNI
     export AESNI1x, AESNI4x, aesni
     export ARS1x, ARS4x, ars
-    include("./aesni_common.jl")
-    include("./aesni.jl")
-    include("./ars.jl")
 else
-    @warn "AES-NI instruction set is not enabled, so the related RNGs (AESNI and ARS) are not available."
+    @warn "AES-acceleration instructions have not been detected, so the related RNGs (AESNI and ARS) are not available."
+end
+
+@static if R123_USE_X86_AES_NI
+    include("./x86/aesni_common.jl")
+    include("./x86/aesni.jl")
+    include("./x86/ars.jl")
+elseif R123_USE_AARCH64_FEAT_AES
+    include("./aarch64/aesni_common.jl")
+    include("./aarch64/aesni.jl")
+    include("./aarch64/ars.jl")
 end
 
 end
