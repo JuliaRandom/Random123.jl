@@ -14,31 +14,52 @@ end
 
 const LITTLE_ENDIAN::Bool = ENDIAN_BOM ≡ 0x04030201
 
-const uint64x2_lvec = NTuple{2, VecElement{UInt64}}
-struct uint64x2
-    data::uint64x2_lvec
-end
-@inline Base.convert(::Type{uint64x2}, x::UInt128) = unsafe_load(Ptr{uint64x2}(pointer_from_objref(Ref(x))))
-@inline Base.convert(::Type{UInt128}, x::uint64x2) = unsafe_load(Ptr{UInt128}(pointer_from_objref(Ref(x))))
-@inline UInt128(x::uint64x2) = convert(UInt128, x)
-@inline uint64x2(x::UInt128) = convert(uint64x2, x)
-@inline Base.convert(::Type{uint64x2}, x::Union{Signed, Unsigned}) = convert(uint64x2, UInt128(x))
-@inline Base.convert(::Type{T}, x::uint64x2) where T <: Union{Signed, Unsigned} = convert(T, UInt128(x))
+abstract type ArmVec128 end
+@inline Base.convert(::Type{T}, x::ArmVec128) where {T<:Union{ArmVec128, UInt128}} =
+    unsafe_load(Ptr{T}(pointer_from_objref(Ref(x))))
+@inline Base.convert(::Type{T}, x::UInt128) where {T<:ArmVec128} =
+    unsafe_load(Ptr{T}(pointer_from_objref(Ref(x))))
+@inline UInt128(x::ArmVec128) = convert(UInt128, x)
+@inline (::Type{T})(x::Union{ArmVec128, UInt128}) where {T<:ArmVec128} = convert(T, x)
+@inline Base.convert(::Type{T}, x::Union{Signed, Unsigned}) where {T<:ArmVec128} =
+    convert(T, UInt128(x))
+@inline Base.convert(::Type{T}, x::ArmVec128) where T <: Union{Signed, Unsigned} =
+    convert(T, UInt128(x))
 
-@inline uint64x2(hi::UInt64, lo::UInt64) = @static if LITTLE_ENDIAN
-    uint64x2((VecElement(lo), VecElement(hi)))
-else
-    uint64x2((VecElement(hi), VecElement(lo)))
+const VEC_FLAVORS = [(2^(7 - i) => 2^i) for i in 3:6]
+for (num_elems, elem_bits) in VEC_FLAVORS
+    vec_symb = Symbol("uint$(elem_bits)x$(num_elems)")
+    lvec_symb = Symbol("uint$(elem_bits)x$(num_elems)_lvec")
+    elem_ty_symb = Symbol("UInt$elem_bits")
+    llvm_xor =
+        """%3 = xor <$(num_elems) x i$(elem_bits)> %1, %0
+        ret <$(num_elems) x i$(elem_bits)> %3"""
+    @eval begin
+        const $lvec_symb = NTuple{$num_elems, VecElement{$elem_ty_symb}}
+        struct $vec_symb <: ArmVec128
+            data::$lvec_symb
+        end
+        @inline $vec_symb(x::Union{UInt128, ArmVec128}) = convert($vec_symb, x)
+
+        @inline function $vec_symb(bytes::Vararg{$elem_ty_symb, $num_elems})
+            bytes_prepped = bytes
+            @static if $LITTLE_ENDIAN
+                bytes_prepped = reverse(bytes_prepped)
+            end
+            bytes_vec::$lvec_symb = VecElement.(bytes_prepped)
+            return $vec_symb(bytes_vec)
+        end
+
+        @inline Base.zero(::Type{$vec_symb}) = convert($vec_symb, zero(UInt128))
+        @inline Base.xor(a::$vec_symb, b::$vec_symb) = llvmcall(
+            $llvm_xor,
+            $lvec_symb, Tuple{$lvec_symb, $lvec_symb},
+            a.data, b.data,
+        ) |> $vec_symb
+    end
 end
 
-@inline Base.zero(::Type{uint64x2}) = convert(uint64x2, zero(UInt128))
 @inline Base.one(::Type{uint64x2}) = uint64x2(zero(UInt64), one(UInt64))
-@inline Base.xor(a::uint64x2, b::uint64x2) = llvmcall(
-    """%3 = xor <2 x i64> %1, %0
-    ret <2 x i64> %3""",
-    uint64x2_lvec, Tuple{uint64x2_lvec, uint64x2_lvec},
-    a.data, b.data,
-) |> uint64x2
 @inline (+)(a::uint64x2, b::uint64x2) = llvmcall(
     """%3 = add <2 x i64> %1, %0
     ret <2 x i64> %3""",
@@ -46,74 +67,6 @@ end
     a.data, b.data,
 ) |> uint64x2
 @inline (+)(a::uint64x2, b::Integer) = a + uint64x2(UInt128(b))
-
-const uint8x16_lvec = NTuple{16, VecElement{UInt8}}
-struct uint8x16
-    data::uint8x16_lvec
-end
-@inline Base.convert(::Type{uint64x2}, x::uint8x16) = unsafe_load(Ptr{uint64x2}(pointer_from_objref(Ref(x))))
-@inline Base.convert(::Type{uint8x16}, x::uint64x2) = unsafe_load(Ptr{uint8x16}(pointer_from_objref(Ref(x))))
-@inline uint8x16(x::uint64x2) = convert(uint8x16, x)
-@inline uint64x2(x::uint8x16) = convert(uint64x2, x)
-@inline Base.convert(::Type{uint8x16}, x::UInt128) = unsafe_load(Ptr{uint8x16}(pointer_from_objref(Ref(x))))
-@inline Base.convert(::Type{UInt128}, x::uint8x16) = unsafe_load(Ptr{UInt128}(pointer_from_objref(Ref(x))))
-@inline UInt128(x::uint8x16) = convert(UInt128, x)
-@inline uint8x16(x::UInt128) = convert(uint8x16, x)
-@inline Base.convert(::Type{uint8x16}, x::Union{Signed, Unsigned}) = convert(uint8x16, UInt128(x))
-@inline Base.convert(::Type{T}, x::uint8x16) where T <: Union{Signed, Unsigned} = convert(T, UInt128(x))
-
-@inline function uint8x16(bytes::Vararg{UInt8, 16})
-    bytes_prepped = bytes
-    @static if LITTLE_ENDIAN
-        bytes_prepped = reverse(bytes_prepped)
-    end
-    bytes_vec::uint8x16_lvec = VecElement.(bytes_prepped)
-    return uint8x16(bytes_vec)
-end
-
-@inline Base.zero(::Type{uint8x16}) = convert(uint8x16, zero(UInt128))
-@inline Base.xor(a::uint8x16, b::uint8x16) = llvmcall(
-    """%3 = xor <16 x i8> %1, %0
-    ret <16 x i8> %3""",
-    uint8x16_lvec, Tuple{uint8x16_lvec, uint8x16_lvec},
-    a.data, b.data,
-) |> uint8x16
-
-const uint32x4_lvec = NTuple{4, VecElement{UInt32}}
-struct uint32x4
-    data::uint32x4_lvec
-end
-@inline Base.convert(::Type{uint64x2}, x::uint32x4) = unsafe_load(Ptr{uint64x2}(pointer_from_objref(Ref(x))))
-@inline Base.convert(::Type{uint32x4}, x::uint64x2) = unsafe_load(Ptr{uint32x4}(pointer_from_objref(Ref(x))))
-@inline uint32x4(x::uint64x2) = convert(uint32x4, x)
-@inline uint64x2(x::uint32x4) = convert(uint64x2, x)
-@inline Base.convert(::Type{uint8x16}, x::uint32x4) = unsafe_load(Ptr{uint8x16}(pointer_from_objref(Ref(x))))
-@inline Base.convert(::Type{uint32x4}, x::uint8x16) = unsafe_load(Ptr{uint32x4}(pointer_from_objref(Ref(x))))
-@inline uint32x4(x::uint8x16) = convert(uint32x4, x)
-@inline uint8x16(x::uint32x4) = convert(uint8x16, x)
-@inline Base.convert(::Type{uint32x4}, x::UInt128) = unsafe_load(Ptr{uint32x4}(pointer_from_objref(Ref(x))))
-@inline Base.convert(::Type{UInt128}, x::uint32x4) = unsafe_load(Ptr{UInt128}(pointer_from_objref(Ref(x))))
-@inline UInt128(x::uint32x4) = convert(UInt128, x)
-@inline uint32x4(x::UInt128) = convert(uint32x4, x)
-@inline Base.convert(::Type{uint32x4}, x::Union{Signed, Unsigned}) = convert(uint32x4, UInt128(x))
-@inline Base.convert(::Type{T}, x::uint32x4) where T <: Union{Signed, Unsigned} = convert(T, UInt128(x))
-
-@inline function uint32x4(bytes::Vararg{UInt32, 4})
-    bytes_prepped = bytes
-    @static if LITTLE_ENDIAN
-        bytes_prepped = reverse(bytes_prepped)
-    end
-    bytes_vec::uint32x4_lvec = VecElement.(bytes_prepped)
-    return uint32x4(bytes_vec)
-end
-
-@inline Base.zero(::Type{uint32x4}) = convert(uint32x4, zero(UInt128))
-@inline Base.xor(a::uint32x4, b::uint32x4) = llvmcall(
-    """%3 = xor <4 x i32> %1, %0
-    ret <4 x i32> %3""",
-    uint32x4_lvec, Tuple{uint32x4_lvec, uint32x4_lvec},
-    a.data, b.data,
-) |> uint32x4
 
 # Raw NEON instrinsics, provided by FEAT_AES
 const ARM_AESE_LLVM_INTRINSIC = "llvm.$LLVM_ARCH_STRING.crypto.aese"
