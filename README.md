@@ -12,7 +12,7 @@ hosted [there](http://juliarandom.github.io/RandomNumbers.jl/stable/man/random12
 
 # Installation
 
-This package is registered. The stable version of this package requires Julia `1.5`. You can install it by:
+This package is registered. The stable version of this package requires Julia `1.8`. You can install it by:
 ```julia
 (v1.5) pkg> add Random123
 ```
