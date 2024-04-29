@@ -50,7 +50,7 @@ else
 end
 
 "True when Arm AArch64 FEAT_AES instructions have been detected."
-const R123_USE_ARM_AARCH64_FEAT_AES::Bool = if Sys.ARCH ≡ :aarch64
+const R123_USE_ARM_AARCH64_FEAT_AES::Bool = @static if Sys.ARCH ≡ :aarch64
         try
         cmd = Base.julia_cmd()
         push!(
@@ -73,7 +73,7 @@ else
 end
 
 "True when Arm AArch32 FEAT_AES instructions have been detected."
-const R123_USE_ARM_AARCH32_FEAT_AES::Bool = if Sys.ARCH ≡ :aarch64
+const R123_USE_ARM_AARCH32_FEAT_AES::Bool = @static if startswith(String(Sys.ARCH), "arm")
         try
         cmd = Base.julia_cmd()
         push!(
