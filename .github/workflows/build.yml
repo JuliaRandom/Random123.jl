@@ -16,11 +16,22 @@ jobs:
     strategy:
       matrix:
         julia-version: ["1.8", "1.10", nightly]
-        julia-arch: [x64, x86]
-        os: [ubuntu-latest, windows-latest, macOS-latest]
+        julia-arch: [x64, x86, aarch64]
+        os: [ubuntu-latest, windows-latest, macos-13, macos-latest]
         exclude:
-          - os: macOS-latest
+          - os: ubuntu-latest
+            julia-arch: aarch64
+          - os: windows-latest
+            julia-arch: aarch64
+          - os: macos-13
             julia-arch: x86
+          - os: macos-13
+            julia-arch: aarch64
+          - os: macos-latest
+            julia-arch: x86
+          - os: macos-latest
+            julia-arch: aarch64
+            julia-version: 1.8
 
     steps:
       - uses: actions/checkout@v2
